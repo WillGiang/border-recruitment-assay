@@ -58,6 +58,7 @@ function processFile(input, output_dir_csv, file) {
 		roiManager("Select", i);
 		table1_row_to_write = MeasureROIsAndUpdateTable(table_name, ROI_type, table1_row_to_write, i);
 	}
+	close(file);
 }
 
 function MeasureROIsAndUpdateTable(table, ROI_name, main_row_to_write, ROI_index) {
@@ -88,7 +89,7 @@ function MeasureROIsAndUpdateTable(table, ROI_name, main_row_to_write, ROI_index
 	return row_to_write;
 }
 
-
+setBatchMode(true);
 Table.create(table_name);
 var table1_row_to_write = 0;
 ROI_types_arr = newArray("background", "border", "non-border_cell1", "non-border_cell2");
@@ -100,5 +101,5 @@ saveAs("Results", output_dir_csv + File.separator + table_name + ".csv");
 close(table_name);
 run("Close All");
 roiManager("reset");
-
+setBatchMode(false);
 print("Done");
