@@ -1,12 +1,20 @@
 // William Giang
-// 2025-01-17
+// 2025-05-28
 //
 // Assumes the input directory contains a series of tifs with stored ROIs as overlays
 // The order is assumed to be background, border, non-border of cell 1, non-border of cell2
+//
+// Update(s): 
+// 2025-03-21
+//  - explicitly Set Measurements
+// 	- now includes more measurements of the ROIs for better quality assurance.
+// 2025-05-28
+//  - able to change ROI line width (but also now guarantees same line width)
 
 #@ File    (label = "Input directory", style = "directory") input
 #@ File    (label = "Output directory for CSV", style = "directory") output_dir_csv
 #@ String  (label = "Output CSV file suffix", value = "border-enrichment_") table_name
+#@ Integer (label = "Width of drawn line", value=10) ROI_linewidth
 #@ String (label = "Image File suffix", value = ".tif") suffix
 
 
@@ -56,6 +64,7 @@ function processFile(input, output_dir_csv, file) {
 	for (i = 0; i < RoiManager.size; i++) {
 		ROI_type = getTypeOfROI(i, ROI_types_arr);
 		roiManager("Select", i);
+		roiManager("Set Line Width", ROI_linewidth);
 		table1_row_to_write = MeasureROIsAndUpdateTable(table_name, ROI_type, table1_row_to_write, i);
 	}
 	close(file);
@@ -73,10 +82,16 @@ function MeasureROIsAndUpdateTable(table, ROI_name, main_row_to_write, ROI_index
 		Stack.setChannel(c);
 		run("Measure");
 		
-		Mean_int = getResult("Mean", c-1);
+		Mean_int     = getResult("Mean",   c-1);
+		Area         = getResult("Area",   c-1);
+		Percent_Area = getResult("%Area",  c-1);
+		Length       = getResult("Length", c-1);
 		
-		Table.set("Filename"            , row_to_write , file_name, table);
-		Table.set( "C"+c + "_MeanInt_"  + ROI_name, row_to_write, Mean_int , table);
+		Table.set("Filename"                      , row_to_write, file_name, table);
+		Table.set("C"+c + "_MeanInt_"  + ROI_name , row_to_write, Mean_int , table);
+		Table.set("C"+c+"_Area_" + ROI_name,        row_to_write, Area     , table);
+		Table.set("C"+c+"_PercentArea_" + ROI_name, row_to_write, Percent_Area, table);
+		Table.set("C"+c+"_Length_"      + ROI_name, row_to_write, Length   , table);
 		Table.update;
 	}
 	close("Results");
@@ -88,7 +103,7 @@ function MeasureROIsAndUpdateTable(table, ROI_name, main_row_to_write, ROI_index
 	
 	return row_to_write;
 }
-
+run("Set Measurements...", "area mean min shape integrated area_fraction stack display redirect=None decimal=3");
 setBatchMode(true);
 Table.create(table_name);
 var table1_row_to_write = 0;
